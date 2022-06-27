@@ -1,15 +1,22 @@
+#Note! For the code to work you need to replace all the placeholders with
+#Your own details. e.g. account_sid, lat/lon, from/to phone numbers.
+
 import requests
+import os
+from twilio.rest import Client
+from twilio.http.http_client import TwilioHttpClient
 
 OWM_Endpoint = "https://api.openweathermap.org/data/2.5/onecall"
-api_key = "76aa0d3f7a72b814b612b6f4532811bc"
+api_key = os.environ.get("OWM_API_KEY")
+account_sid = "YOUR ACCOUNT SID"
+auth_token = os.environ.get("AUTH_TOKEN")
 
 weather_params = {
-    "lat": 39.575500,
-    "lon": -106.100400,
+    "lat": "YOUR LATITUDE",
+    "lon": "YOUR LONGITUDE",
     "appid": api_key,
     "exclude": "current,minutely,daily"
 }
-
 
 response = requests.get(OWM_Endpoint, params=weather_params)
 response.raise_for_status()
@@ -24,6 +31,15 @@ for hour_data in weather_slice:
         will_rain = True
 
 if will_rain:
-    print("Bring an unbrella.")
+    proxy_client = TwilioHttpClient()
+    proxy_client.session.proxies = {'https': os.environ['https_proxy']}
 
-# print(weather_data["hourly"][0]["weather"][0]["id"])
+    client = Client(account_sid, auth_token, http_client=proxy_client)
+    message = client.messages \
+        .create(
+        body="It's going to rain today. Remember to bring an â˜”ï¸",
+        from_="YOUR TWILIO VIRTUAL NUMBER",
+        to="YOUR TWILIO VERIFIED REAL NUMBER"
+    )
+    print(message.status)
+
